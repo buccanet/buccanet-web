@@ -46,8 +46,12 @@ export const requireClient = (): BuccanetClient => {
   return client;
 };
 
+/** Saves run in the order the client hands them over; a failed one is shown to the person. */
 const persist = (state: Uint8Array): void => {
-  void saveState(state);
+  saveState(state).catch((error: unknown) => {
+    console.error('buccanet', error);
+    publish({ notice: 'This browser could not save the device. Recent changes may be lost after a reload.' });
+  });
 };
 
 export const refreshRooms = async (): Promise<void> => {
