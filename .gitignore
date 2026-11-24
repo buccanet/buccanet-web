@@ -1,0 +1,20 @@
+# Scratch work, at every depth. `rm -rf .tmp` must always be safe.
+.tmp/
+.DS_Store
+*.log
+.env
+.env.*
+!.env.example
+.idea/
+.impeccable/
+
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Built by `npm run sdk` from vendor/buccanet.
+src/sdk/pkg/
+public/favicon.png
+public/apple-touch-icon.png
+public/icon-512.png

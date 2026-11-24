@@ -1,0 +1,3 @@
+[submodule "vendor/buccanet"]
+	path = vendor/buccanet
+	url = https://github.com/buccanet/buccanet.git
