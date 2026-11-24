@@ -12,6 +12,7 @@ import { InviteDialog } from '../components/InviteDialog';
 import { MembersList, MembersPanel } from '../components/MembersPanel';
 import { NewRoomDialog } from '../components/NewRoomDialog';
 import { RoomList } from '../components/RoomList';
+import { RulesDialog } from '../components/RulesDialog';
 
 export const ChatPage = () => {
   const { roomId } = useParams();
@@ -19,6 +20,7 @@ export const ChatPage = () => {
   const [creating, setCreating] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [people, setPeople] = useState(false);
+  const [reading, setReading] = useState(false);
   const room = state.rooms.find((candidate) => candidate.roomId === roomId);
   const pendingHere = state.pending.filter((request) => request.roomId === roomId);
 
@@ -51,6 +53,7 @@ export const ChatPage = () => {
             <Button variant="outline" className="h-9 lg:hidden" onClick={() => setPeople(true)}>
               People{pendingHere.length > 0 ? ` · ${pendingHere.length}` : ''}
             </Button>
+            <Button variant="outline" className="h-9" onClick={() => setReading(true)}>Rules</Button>
             <Button variant="outline" className="h-9" onClick={() => setInviting(true)}>Invite</Button>
           </header>
           {state.notice ? (
@@ -74,6 +77,7 @@ export const ChatPage = () => {
       ) : null}
       {creating ? <NewRoomDialog onClose={() => setCreating(false)} /> : null}
       {inviting && room ? <InviteDialog roomId={room.roomId} onClose={() => setInviting(false)} /> : null}
+      {reading && room ? <RulesDialog room={room} onClose={() => setReading(false)} /> : null}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import type { PendingJoin, RoomInfo } from '@/sdk/types';
 
 import { decide } from '../actions';
+import { memberCount } from '../utils/memberCount';
 
 interface MembersPanelProps {
   room: RoomInfo;
@@ -41,7 +42,7 @@ export const MembersList = ({ room, pending, me }: MembersPanelProps) => (
       </ul>
     ) : null}
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-chalk-2">{room.members.length} members</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-chalk-2">{memberCount(room.members.length)}</h3>
       <ul className="space-y-1">
         {room.members.map((member) => (
           <li key={member.deviceId} className="flex items-center gap-2.5 py-1.5">

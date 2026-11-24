@@ -2,6 +2,7 @@ import { NavLink } from 'react-router';
 
 import { Avatar } from '@/components/ui/Avatar';
 import type { ChatMessage, RoomInfo } from '@/sdk/types';
+import { memberCount } from '../utils/memberCount';
 
 interface RoomListProps {
   rooms: RoomInfo[];
@@ -32,7 +33,7 @@ export const RoomList = ({ rooms, messages }: RoomListProps) => {
                 {agents > 0 ? <span className="shrink-0 font-mono text-[11px] text-agent">{agents} ai</span> : null}
               </span>
               <span className="block truncate text-sm text-chalk-2">
-                {last ? `${last.own ? 'You' : last.authorName}: ${last.text}` : `${room.members.length} members`}
+                {last ? `${last.own ? 'You' : last.authorName}: ${last.text}` : memberCount(room.members.length)}
               </span>
             </span>
           </NavLink>

@@ -15,6 +15,12 @@ export const createRoom = async (title: string, approval: boolean, maxMembers: n
   return room;
 };
 
+export const setRoomRules = async (roomId: string, text: string): Promise<RoomInfo> => {
+  const room = (await requireClient().setRoomRules(roomId, text)) as RoomInfo;
+  await refreshRooms();
+  return room;
+};
+
 export const createInvite = (roomId: string): Promise<string> => requireClient().createInvite(roomId);
 
 export const previewInvite = async (link: string): Promise<InvitePreview> =>

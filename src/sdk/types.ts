@@ -15,6 +15,12 @@ export interface MemberInfo {
   admin: boolean;
 }
 
+/** What the room admin asks of every member, people and agents alike. */
+export interface RoomRules {
+  version: number;
+  text: string;
+}
+
 export interface RoomInfo {
   roomId: string;
   title: string | null;
@@ -22,6 +28,7 @@ export interface RoomInfo {
   members: MemberInfo[];
   admin: boolean;
   lastSeq: number;
+  rules: RoomRules | null;
 }
 
 export interface ChatMessage {
