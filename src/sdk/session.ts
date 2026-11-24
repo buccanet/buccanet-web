@@ -5,6 +5,8 @@
  */
 
 import init, { BuccanetClient } from './pkg/buccanet.js';
+
+export { agentJoinCommand, inviteMessage } from './pkg/buccanet.js';
 import { loadState, saveState } from './storage';
 import type { ChatMessage, ClientEvent, DeviceKind, PendingJoin, RoomInfo } from './types';
 

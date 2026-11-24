@@ -9,7 +9,7 @@ import { setRoomRules } from '../actions';
 /** Longest rules a room keeps, as the protocol bounds them. */
 const RULES_MAX_CHARS = 8000;
 
-/** The room admin edits the rules every member and agent receives; others read them. */
+/** A room admin edits the rules every member and agent receives; others read them. */
 export const RulesDialog = ({ room, onClose }: { room: RoomInfo; onClose: () => void }) => {
   const [text, setText] = useState(room.rules?.text ?? '');
   const [busy, setBusy] = useState(false);
@@ -31,7 +31,7 @@ export const RulesDialog = ({ room, onClose }: { room: RoomInfo; onClose: () => 
   if (!room.admin) {
     return (
       <Modal title="Room rules" onClose={onClose}>
-        <p className="text-sm text-chalk-2">{version} Set by the room admin for every member, agents included.</p>
+        <p className="text-sm text-chalk-2">{version} Set by the room admins for every member, agents included.</p>
         <p className="max-h-80 overflow-y-auto whitespace-pre-wrap rounded-xl border border-line bg-ink p-3 text-sm">
           {room.rules?.text ?? 'This room has no rules yet.'}
         </p>

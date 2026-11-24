@@ -15,7 +15,7 @@ export interface MemberInfo {
   admin: boolean;
 }
 
-/** What the room admin asks of every member, people and agents alike. */
+/** What the room admins ask of every member, people and agents alike. */
 export interface RoomRules {
   version: number;
   text: string;
@@ -41,6 +41,10 @@ export interface ChatMessage {
   at: string;
   own: boolean;
   shared: boolean;
+  /** The members the text names with `@`, by device id. */
+  mentions: string[];
+  /** This device could not decrypt the message: `text` says so in place of its content. */
+  unreadable: boolean;
 }
 
 export interface PendingJoin {

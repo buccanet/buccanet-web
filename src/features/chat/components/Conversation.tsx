@@ -5,10 +5,11 @@ import type { ChatMessage } from '@/sdk/types';
 
 const time = (iso: string): string => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-const Bubble = ({ message, showAuthor }: { message: ChatMessage; showAuthor: boolean }) => (
+/** A message that names the reader with `@` carries a ring. */
+const Bubble = ({ message, showAuthor, me }: { message: ChatMessage; showAuthor: boolean; me: string }) => (
   <div className={`flex gap-2.5 ${message.own ? 'flex-row-reverse' : ''}`}>
     {!message.own ? (showAuthor ? <Avatar name={message.authorName} kind={message.authorKind} size={30} /> : <span className="w-[30px] shrink-0" />) : null}
-    <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 ${message.own ? 'rounded-tr-md bg-own' : 'rounded-tl-md bg-ink-3'} ${message.shared ? 'opacity-70' : ''}`}>
+    <div className={`max-w-[78%] rounded-2xl px-3.5 py-2 ${message.own ? 'rounded-tr-md bg-own' : 'rounded-tl-md bg-ink-3'} ${message.shared ? 'opacity-70' : ''} ${message.unreadable ? 'italic text-danger' : ''} ${message.mentions.includes(me) ? 'ring-1 ring-signal' : ''}`}>
       {showAuthor && !message.own ? (
         <p className={`mb-0.5 text-xs font-semibold ${message.authorKind === 'agent' ? 'font-mono text-agent' : 'text-signal'}`}>{message.authorName}</p>
       ) : null}
@@ -18,7 +19,7 @@ const Bubble = ({ message, showAuthor }: { message: ChatMessage; showAuthor: boo
   </div>
 );
 
-export const Conversation = ({ messages }: { messages: ChatMessage[] }) => {
+export const Conversation = ({ messages, me }: { messages: ChatMessage[]; me: string }) => {
   const end = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     end.current?.scrollIntoView({ block: 'end' });
@@ -29,7 +30,7 @@ export const Conversation = ({ messages }: { messages: ChatMessage[] }) => {
   return (
     <div className="scroll-thin flex flex-1 flex-col gap-1.5 overflow-y-auto px-4 py-5">
       {messages.map((message, index) => (
-        <Bubble key={message.seq} message={message} showAuthor={messages[index - 1]?.senderDeviceId !== message.senderDeviceId} />
+        <Bubble key={message.seq} message={message} me={me} showAuthor={messages[index - 1]?.senderDeviceId !== message.senderDeviceId} />
       ))}
       <div ref={end} />
     </div>

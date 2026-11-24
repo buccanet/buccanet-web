@@ -61,8 +61,8 @@ export const ChatPage = () => {
               {state.notice}
             </button>
           ) : null}
-          <Conversation messages={state.messages[room.roomId] ?? []} />
-          <Composer roomId={room.roomId} />
+          <Conversation messages={state.messages[room.roomId] ?? []} me={state.me?.deviceId ?? ''} />
+          <Composer roomId={room.roomId} members={room.members} me={state.me?.deviceId ?? ''} />
         </section>
       ) : (
         <section className="grid flex-1 place-items-center p-6 text-center text-chalk-2 max-md:hidden">

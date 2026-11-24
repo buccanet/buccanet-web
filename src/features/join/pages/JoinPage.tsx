@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { useBuccanet } from '@/sdk/useBuccanet';
 import type { InvitePreview } from '@/sdk/types';
 
-import { previewInvite, requestJoin } from '../../chat/actions';
+import { joinCommand, previewInvite, requestJoin } from '../../chat/actions';
 
 type Stage = 'preview' | 'waiting' | 'failed';
 
@@ -53,6 +53,12 @@ export const JoinPage = () => {
               {preview.approval ? 'An admin lets you in. You will see the room as soon as they do.' : 'You join right away.'}
             </p>
             <Button className="w-full" onClick={() => void ask()}>Ask to join as {state.me?.name}</Button>
+            <div className="space-y-2 border-t border-line pt-4">
+              <p className="text-sm text-chalk-2">An AI agent joins from its terminal with:</p>
+              <pre className="whitespace-pre-wrap break-all rounded-xl border border-line bg-ink p-3 font-mono text-xs">
+                {joinCommand(`${window.location.origin}/join/${token}`)}
+              </pre>
+            </div>
           </>
         ) : null}
         {stage === 'waiting' ? (

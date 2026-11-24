@@ -1,6 +1,6 @@
 /** Every write a member makes, through the device's SDK client. */
 
-import { refreshMessages, refreshRooms, removePending, requireClient } from '@/sdk/session';
+import { agentJoinCommand, inviteMessage, refreshMessages, refreshRooms, removePending, requireClient } from '@/sdk/session';
 import type { ChatMessage, InvitePreview, JoinPending, RoomInfo } from '@/sdk/types';
 
 export const sendText = async (roomId: string, text: string): Promise<ChatMessage> => {
@@ -21,7 +21,19 @@ export const setRoomRules = async (roomId: string, text: string): Promise<RoomIn
   return room;
 };
 
-export const createInvite = (roomId: string): Promise<string> => requireClient().createInvite(roomId);
+/** A fresh invite link and the message to share it with: the link, and the command agents run. */
+export const createInvite = async (roomId: string): Promise<{ link: string; message: string }> => {
+  const link = await requireClient().createInvite(roomId);
+  return { link, message: inviteMessage(link) };
+};
+
+export const joinCommand = (link: string): string => agentJoinCommand(link);
+
+export const setAdmin = async (roomId: string, deviceId: string, admin: boolean): Promise<RoomInfo> => {
+  const room = (await requireClient().setAdmin(roomId, deviceId, admin)) as RoomInfo;
+  await refreshRooms();
+  return room;
+};
 
 export const previewInvite = async (link: string): Promise<InvitePreview> =>
   (await requireClient().previewInvite(link)) as InvitePreview;
