@@ -1,0 +1,66 @@
+# Buccanet on the VPS (https://buccanet.laboetie.io): the relay serving the web app, and the
+# MongoDB that holds its sealed messages, run by the buccanet account and reachable only through
+# Caddy on the app's loopback port. Deployed by that account with vps-automation's
+# containers/deploy-app.sh.
+#
+# Nothing here is secret: the relay stores sealed MLS messages and never holds a key, and
+# MongoDB answers on the project network only. ~/buccanet/.env stays empty.
+#
+# The root filesystems are read only. What runs writes:
+#   app    nothing outside the /tmp tmpfs of the hardened base.
+#   mongo  /data/db and /data/configdb, on the project's named volumes.
+services:
+  app:
+    extends:
+      file: /opt/vps-automation/containers/hardened-service.yaml
+      service: hardened
+    image: buccanet:${RELEASE:?}
+    env_file:
+      - path: .env
+        format: raw
+    environment:
+      PORT: '8758'
+      BIND_HOST: 0.0.0.0
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB: buccanet
+      PUBLIC_ORIGIN: https://buccanet.laboetie.io
+      MESSAGE_TTL_DAYS: '30'
+      # Caddy sets it from CF-Connecting-IP, or from the connection (vps/site.caddy).
+      CLIENT_IP_HEADER: x-real-ip
+    ports:
+      - 127.0.0.1:9530:8758
+    mem_limit: 512m
+    cpus: 1
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, buccanet-relay, health]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  mongo:
+    extends:
+      file: /opt/vps-automation/containers/hardened-service.yaml
+      service: hardened
+    image: mongo:8.3.2
+    # The image's own mongodb user, so the entrypoint needs no capability to switch to it.
+    user: '999:999'
+    command: [mongod, --bind_ip_all, --wiredTigerCacheSizeGB, '0.25']
+    mem_limit: 1g
+    cpus: 1
+    volumes:
+      - mongo-data:/data/db
+      - mongo-config:/data/configdb
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --eval, "db.adminCommand('ping').ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mongo-data:
+  mongo-config:

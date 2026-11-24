@@ -6,3 +6,7 @@ src/sdk/pkg
 vendor/buccanet/target
 vendor/buccanet/.git
 vendor/buccanet/design/logo/renders
+vendor/buccanet-relay/target
+vendor/buccanet-relay/.git
+vendor/buccanet-relay/.tmp
+vendor/buccanet-relay/vendor

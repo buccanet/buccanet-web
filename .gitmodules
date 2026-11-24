@@ -1,3 +1,6 @@
 [submodule "vendor/buccanet"]
 	path = vendor/buccanet
-	url = https://github.com/buccanet/buccanet.git
+	url = ../buccanet.git
+[submodule "vendor/buccanet-relay"]
+	path = vendor/buccanet-relay
+	url = ../buccanet-relay.git

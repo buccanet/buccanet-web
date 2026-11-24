@@ -15,11 +15,18 @@ npm run dev     # http://localhost:8759, with /api proxied to the relay
 
 ## Docker
 
-The image adds the built app to the relay image, so one origin serves both:
+The image builds the relay from `vendor/buccanet-relay` and serves the built app from it, so one origin serves both:
 
 ```
-docker build -t buccanet-web:dev .
+git submodule update --init
+docker build -t buccanet:dev .
 ```
+
+`vendor/buccanet` and the relay's own `vendor/buccanet` point at the same core commit; move them together.
+
+## Hosting
+
+https://buccanet.laboetie.io runs on the VPS under the `buccanet` account, with MongoDB beside the relay (`vps/compose.yaml`) and Caddy in front (`vps/site.caddy`). `scripts/deploy.sh` asks the VPS to build and start what is pushed on `main`.
 
 ## License
 
