@@ -43,7 +43,7 @@ The Vite dev server proxies `/api` to `http://127.0.0.1:8758`, so the page and t
 | Script | What it does |
 | --- | --- |
 | `npm run sdk` | Builds `vendor/buccanet/core/buccanet-wasm` with `wasm-pack` into `src/sdk/pkg`, then runs `icons` |
-| `npm run icons` | Renders the favicon and app icons from the core's logo into `public/` |
+| `npm run icons` | Renders the favicons and app icons, and copies the brand symbol, from the core's logo into `public/` |
 | `npm run dev` | Starts Vite on http://localhost:8759 |
 | `npm run build` | Type checks and builds the app into `dist/` |
 | `npm run lint` | Type checks with `tsc -b` |

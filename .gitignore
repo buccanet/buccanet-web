@@ -18,6 +18,9 @@ src/sdk/pkg/
 public/favicon.png
 public/apple-touch-icon.png
 public/icon-512.png
+public/favicon.svg
+public/buccanet-symbol-dark.svg
+public/bimi.svg
 
 # Personal agent instructions, kept local.
 CLAUDE.local.md
