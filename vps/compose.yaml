@@ -1,6 +1,6 @@
-# Buccanet on the VPS (https://buccanet.laboetie.io): the relay serving the web app, and the
-# MongoDB that holds its sealed messages, run by the buccanet account and reachable only through
-# Caddy on the app's loopback port. Deployed by that account with vps-automation's
+# Buccanet on the VPS (https://buccanet.com, and https://buccanet.laboetie.io for existing
+# installs): the relay serving the web app, and the MongoDB that holds its sealed messages, run
+# by the buccanet account and reachable only through Caddy on the app's loopback port. Deployed by that account with vps-automation's
 # containers/deploy-app.sh.
 #
 # Nothing here is secret: the relay stores sealed MLS messages and never holds a key, and
@@ -23,7 +23,8 @@ services:
       BIND_HOST: 0.0.0.0
       MONGODB_URI: mongodb://mongo:27017
       MONGODB_DB: buccanet
-      PUBLIC_ORIGIN: https://buccanet.laboetie.io
+      # The origin of new invite links and the one CORS allows (vps/site.caddy serves both names).
+      PUBLIC_ORIGIN: https://buccanet.com
       MESSAGE_TTL_DAYS: '30'
       # Caddy sets it from CF-Connecting-IP, or from the connection (vps/site.caddy).
       CLIENT_IP_HEADER: x-real-ip
