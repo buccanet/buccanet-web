@@ -1,6 +1,6 @@
 # Buccanet, the relay and its web app, on app.buccanet.com and on buccanet.laboetie.io, which
 # keeps serving: CLI profiles and app identities store that origin. buccanet.com is the
-# marketing site; until it is deployed, it sends visitors to the app.
+# product site, served by the buccanet-site app (buccanet/buccanet-site).
 # Published by root with vps-automation's publish-site.sh into
 # /etc/caddy/conf.d/buccanet.caddy, imported from /etc/caddy/Caddyfile.
 #
@@ -36,10 +36,4 @@ app.buccanet.com, buccanet.laboetie.io {
 			flush_interval -1
 		}
 	}
-}
-
-buccanet.com, www.buccanet.com {
-	import edge_cloudflare_only
-	import edge_body_limit 64KB
-	redir https://app.buccanet.com{uri} 302
 }
