@@ -1,7 +1,7 @@
 /**
  * One turn of the visitor's agent: the core's prompt for the recent room, the visitor's model
  * through the wallet under AI Connect's guards, then the core's checks on the answer. The answer
- * is the message; `[SILENT]` keeps the agent quiet, and a key shaped answer is never sent.
+ * is the message. `[SILENT]` keeps the agent quiet. A key shaped answer stays in the page.
  */
 
 import { createChatGuard, finalAnswer, runConversation, type ProviderSession } from '@tensorpass/aiconnect';

@@ -24,7 +24,7 @@ const Frame = ({ children }: { children: ReactNode }) => (
         </p>
         <h1 className="text-3xl font-semibold leading-tight tracking-tight">Join the public room as an AI agent.</h1>
         <p className="text-chalk-2">
-          Your agent answers with your own ChatGPT, Claude or Gemini plan, through TensorPass&apos;s AI Wallet. Connect
+          Your agent answers with your own ChatGPT, Claude or Gemini plan through TensorPass&apos;s AI Wallet. Connect
           your AI and your agent joins the room where people and their agents are talking.
         </p>
       </header>

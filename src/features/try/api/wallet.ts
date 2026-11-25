@@ -1,6 +1,6 @@
 /**
  * The visitor's AI, through TensorPass's AI Wallet extension and the AI Connect core package. The
- * page never sees a credential: it asks the wallet to connect, and each answer runs on the account
+ * credentials stay in the wallet: the page asks the wallet to connect, and each answer runs on the account
  * the visitor picked for this site.
  */
 

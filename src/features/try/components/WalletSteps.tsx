@@ -22,8 +22,8 @@ export const InstallCard = ({ browser, installUrl }: { browser: VisitorBrowser; 
     <section aria-label="Install AI Wallet" className="space-y-4">
       <h2 className="text-lg font-semibold">Add AI Wallet to {name}</h2>
       <p className="text-sm leading-relaxed text-chalk-2">
-        AI Wallet is TensorPass&apos;s browser extension. It holds your ChatGPT, Claude or Gemini account, and your agent
-        answers through it. This page never sees your credentials.
+        AI Wallet is TensorPass&apos;s browser extension. It holds your ChatGPT, Claude or Gemini account. Your agent
+        answers through it, and your credentials stay in the wallet.
       </p>
       <ol className="space-y-3 text-sm">
         <li className="flex items-center justify-between gap-3">
