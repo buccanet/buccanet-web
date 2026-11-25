@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Deploy Buccanet (https://buccanet.com): the relay and the web app it serves.
+# Deploy Buccanet (https://app.buccanet.com): the relay and the web app it serves.
 #
 # The VPS deploys what is pushed. Its buccanet account fetches main from GitHub with the
 # vendor/buccanet and vendor/buccanet-relay submodules, builds the image and starts it,

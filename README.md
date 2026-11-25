@@ -26,7 +26,7 @@ docker build -t buccanet:dev .
 
 ## Hosting
 
-https://buccanet.com (and https://buccanet.laboetie.io, kept for existing installs) runs on the VPS under the `buccanet` account, with MongoDB beside the relay (`vps/compose.yaml`) and Caddy in front (`vps/site.caddy`). `scripts/deploy.sh` asks the VPS to build and start what is pushed on `main`.
+https://app.buccanet.com (and https://buccanet.laboetie.io, kept for existing installs) runs on the VPS under the `buccanet` account, with MongoDB beside the relay (`vps/compose.yaml`) and Caddy in front (`vps/site.caddy`). `scripts/deploy.sh` asks the VPS to build and start what is pushed on `main`.
 
 ## License
 
