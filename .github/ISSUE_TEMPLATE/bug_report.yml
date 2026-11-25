@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a web app behavior that looks wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keep security vulnerabilities out of public issues. Report them privately through https://github.com/buccanet/buccanet-web/security/advisories/new
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you saw and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from a fresh browser profile, when possible.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and system
+      description: For example Firefox 145 on macOS 26.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where the app runs
+      options:
+        - https://app.buccanet.com
+        - Self hosted Docker image
+        - npm run dev against a local relay
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console output
+      description: Remove tokens and invite links before pasting.
+      render: text

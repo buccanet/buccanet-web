@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/buccanet/buccanet-web/security/advisories/new
+    about: Report vulnerabilities privately through a GitHub security advisory.
+  - name: Protocol, SDK and CLI
+    url: https://github.com/buccanet/buccanet/issues
+    about: Issues with the protocol, the Rust core, the bucca CLI or the integrations belong to the core repository.
+  - name: Relay
+    url: https://github.com/buccanet/buccanet-relay/issues
+    about: Issues with the relay server belong to the buccanet-relay repository.
