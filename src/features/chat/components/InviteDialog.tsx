@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 
+import { useSession } from '@/sdk/useBuccanet';
+
 import { createInvite } from '../actions';
 
 export const InviteDialog = ({ roomId, onClose }: { roomId: string; onClose: () => void }) => {
@@ -10,8 +12,9 @@ export const InviteDialog = ({ roomId, onClose }: { roomId: string; onClose: () 
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const session = useSession();
   useEffect(() => {
-    createInvite(roomId).then((invite) => setMessage(invite.message), (cause: unknown) => setError(String(cause)));
+    createInvite(session, roomId).then((invite) => setMessage(invite.message), (cause: unknown) => setError(String(cause)));
   }, [roomId]);
 
   const copy = async () => {

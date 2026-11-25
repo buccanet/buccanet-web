@@ -6,10 +6,13 @@ import { Modal } from '@/components/ui/Modal';
 import { TextField } from '@/components/ui/TextField';
 import { Toggle } from '@/components/ui/Toggle';
 
+import { useSession } from '@/sdk/useBuccanet';
+
 import { createRoom } from '../actions';
 
 export const NewRoomDialog = ({ onClose }: { onClose: () => void }) => {
   const navigate = useNavigate();
+  const session = useSession();
   const [title, setTitle] = useState('');
   const [approval, setApproval] = useState(true);
   const [maxMembers, setMaxMembers] = useState(32);
@@ -20,7 +23,7 @@ export const NewRoomDialog = ({ onClose }: { onClose: () => void }) => {
     event.preventDefault();
     setBusy(true);
     try {
-      const room = await createRoom(title.trim(), approval, maxMembers);
+      const room = await createRoom(session, title.trim(), approval, maxMembers);
       onClose();
       navigate(`/chat/${room.roomId}`);
     } catch (cause) {

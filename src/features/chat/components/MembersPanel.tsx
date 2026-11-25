@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import type { MemberInfo, PendingJoin, RoomInfo } from '@/sdk/types';
+import { useSession } from '@/sdk/useBuccanet';
 
 import { decide, setAdmin } from '../actions';
 import { memberCount } from '../utils/memberCount';
@@ -14,10 +15,11 @@ interface MembersPanelProps {
 }
 
 const PendingRow = ({ request }: { request: PendingJoin }) => {
+  const session = useSession();
   const [busy, setBusy] = useState(false);
   const act = async (approve: boolean) => {
     setBusy(true);
-    await decide(request.roomId, request.requestId, approve).finally(() => setBusy(false));
+    await decide(session, request.roomId, request.requestId, approve).finally(() => setBusy(false));
   };
   return (
     <li className="space-y-2 rounded-xl border border-warn/40 bg-warn/5 p-3">
@@ -35,12 +37,13 @@ const PendingRow = ({ request }: { request: PendingJoin }) => {
 
 /** One member; an admin of the room can make another member admin or take the role back. */
 const MemberRow = ({ room, member, me }: { room: RoomInfo; member: MemberInfo; me: string }) => {
+  const session = useSession();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toggle = async () => {
     setBusy(true);
     setError(null);
-    await setAdmin(room.roomId, member.deviceId, !member.admin)
+    await setAdmin(session, room.roomId, member.deviceId, !member.admin)
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setBusy(false));
   };

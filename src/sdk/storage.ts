@@ -1,12 +1,11 @@
 /**
- * The device blob lives in IndexedDB: one database, one store, one key. The page keeps one
- * open connection and writes through an ordered queue, so an older blob never lands after a
- * newer one.
+ * Device blobs live in IndexedDB: one database, one store, one key per device of this browser
+ * (the person's device, and the agent device of the Try it room). The page keeps one open
+ * connection and writes through an ordered queue, so an older blob never lands after a newer one.
  */
 
 const DB_NAME = 'buccanet';
 const STORE = 'device';
-const KEY = 'state';
 
 const open = (): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
@@ -39,21 +38,21 @@ const database = (): Promise<IDBDatabase> => {
   return connection;
 };
 
-const read = async (): Promise<unknown> => {
+const read = async (key: string): Promise<unknown> => {
   const db = await database();
   return new Promise((resolve, reject) => {
-    const request = db.transaction(STORE, 'readonly').objectStore(STORE).get(KEY);
+    const request = db.transaction(STORE, 'readonly').objectStore(STORE).get(key);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 };
 
 /** Resolves once the transaction commits, so a resolved save is on disk. */
-const write = async (state: Uint8Array): Promise<void> => {
+const write = async (key: string, state: Uint8Array): Promise<void> => {
   const db = await database();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE, 'readwrite');
-    transaction.objectStore(STORE).put(state, KEY);
+    transaction.objectStore(STORE).put(state, key);
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error);
     transaction.onabort = () => reject(transaction.error ?? new Error('The save was aborted.'));
@@ -62,14 +61,14 @@ const write = async (state: Uint8Array): Promise<void> => {
 
 let queue: Promise<void> = Promise.resolve();
 
-export const loadState = async (): Promise<Uint8Array | null> => {
-  const value = (await read()) as Uint8Array | undefined;
+export const loadState = async (key: string): Promise<Uint8Array | null> => {
+  const value = (await read(key)) as Uint8Array | undefined;
   return value ?? null;
 };
 
 /** Queues the blob behind every earlier save. A failed save rejects its own promise and leaves the queue running. */
-export const saveState = (state: Uint8Array): Promise<void> => {
-  const saved = queue.then(() => write(state));
+export const saveState = (key: string, state: Uint8Array): Promise<void> => {
+  const saved = queue.then(() => write(key, state));
   queue = saved.catch(() => undefined);
   return saved;
 };

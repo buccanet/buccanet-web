@@ -4,11 +4,14 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { ChatPage } from '@/features/chat/pages/ChatPage';
 import { JoinPage } from '@/features/join/pages/JoinPage';
 import { WelcomePage } from '@/features/onboarding/pages/WelcomePage';
-import { boot } from '@/sdk/session';
+import { personSession } from '@/sdk/session';
 import { useBuccanet } from '@/sdk/useBuccanet';
 
 const Gate = () => {
   const state = useBuccanet();
+  useEffect(() => {
+    void personSession.boot();
+  }, []);
   if (state.status === 'loading') {
     return <main className="grid min-h-full place-items-center font-mono text-sm text-chalk-2">opening your device…</main>;
   }
@@ -34,13 +37,8 @@ const Chats = () => (
   </Routes>
 );
 
-export const App = () => {
-  useEffect(() => {
-    void boot();
-  }, []);
-  return (
-    <BrowserRouter>
-      <Gate />
-    </BrowserRouter>
-  );
-};
+export const App = () => (
+  <BrowserRouter>
+    <Gate />
+  </BrowserRouter>
+);

@@ -29,6 +29,8 @@ export interface RoomInfo {
   admin: boolean;
   lastSeq: number;
   rules: RoomRules | null;
+  /** The room has a public listing: anyone can join it and read what is written there. */
+  listed: boolean;
 }
 
 export interface ChatMessage {
@@ -60,6 +62,16 @@ export interface InvitePreview {
   memberCount: number;
   approval: boolean;
   expiresAt: string;
+}
+
+/** What anyone reads of a listed room before asking to join it. */
+export interface ListingView {
+  slug: string;
+  roomId: string;
+  title: string;
+  description: string;
+  memberCount: number;
+  maxMembers: number;
 }
 
 export interface JoinPending {

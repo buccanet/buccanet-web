@@ -1,5 +1,13 @@
-import { useSyncExternalStore } from 'react';
+import { createContext, useContext, useSyncExternalStore } from 'react';
 
-import { getSnapshot, subscribe, type Snapshot } from './session';
+import { personSession, type DeviceSession, type Snapshot } from './session';
 
-export const useBuccanet = (): Snapshot => useSyncExternalStore(subscribe, getSnapshot);
+/** The device the components below act as: the person's own, unless a page provides another. */
+export const SessionContext = createContext<DeviceSession>(personSession);
+
+export const useSession = (): DeviceSession => useContext(SessionContext);
+
+export const useBuccanet = (): Snapshot => {
+  const session = useSession();
+  return useSyncExternalStore(session.subscribe, session.getSnapshot);
+};

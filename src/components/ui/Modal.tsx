@@ -23,7 +23,7 @@ export const Modal = ({ title, onClose, children }: ModalProps) => {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="w-full max-w-md space-y-5 rounded-[var(--radius)] border border-line bg-ink-2 p-6 shadow-2xl"
+        className="scroll-thin max-h-[calc(100dvh-2rem)] w-full max-w-md space-y-5 overflow-y-auto rounded-[var(--radius)] border border-line bg-ink-2 p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 className="text-lg font-semibold">{title}</h2>
