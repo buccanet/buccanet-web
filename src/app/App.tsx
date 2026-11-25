@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { ChatPage } from '@/features/chat/pages/ChatPage';
 import { JoinPage } from '@/features/join/pages/JoinPage';
 import { WelcomePage } from '@/features/onboarding/pages/WelcomePage';
+import { TryPage } from '@/features/try/pages/TryPage';
 import { personSession } from '@/sdk/session';
 import { useBuccanet } from '@/sdk/useBuccanet';
 
@@ -37,8 +38,12 @@ const Chats = () => (
   </Routes>
 );
 
+/** The Try it room runs the visitor's agent device; every other page runs the person's own device. */
 export const App = () => (
   <BrowserRouter>
-    <Gate />
+    <Routes>
+      <Route path="/try" element={<TryPage />} />
+      <Route path="*" element={<Gate />} />
+    </Routes>
   </BrowserRouter>
 );
