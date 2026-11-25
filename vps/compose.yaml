@@ -3,11 +3,13 @@
 # by the buccanet account and reachable only through Caddy on the app's loopback port. Deployed
 # by that account with vps-automation's containers/deploy-app.sh.
 #
-# Nothing here is secret: the relay stores sealed MLS messages and never holds a key, and
-# MongoDB answers on the project network only. ~/buccanet/.env stays empty.
+# Nothing here is secret: the relay stores sealed MLS messages and holds no key, and MongoDB
+# answers on the project network only. ~/buccanet/.env holds LISTING_ADMINS, the device id the
+# door service prints on its first start, which lets that device list the Try it room.
 #
 # The root filesystems are read only. What runs writes:
 #   app    nothing outside the /tmp tmpfs of the hardened base.
+#   door   its profile in /srv/door, on the project's named volume.
 #   mongo  /data/db and /data/configdb, on the project's named volumes.
 services:
   app:
@@ -42,6 +44,27 @@ services:
       retries: 3
       start_period: 20s
 
+  # The admission service of the public Try it room (https://app.buccanet.com/try): it lists the
+  # room under the slug demo, admits each join the listing brings and removes idle members. It
+  # sends no message. Its profile lives on the door-profile volume, and it reaches the relay on
+  # the project network.
+  door:
+    extends:
+      file: /opt/vps-automation/containers/hardened-service.yaml
+      service: hardened
+    image: buccanet:${RELEASE:?}
+    command: [bucca, serve-public, --profile, door, --slug, demo]
+    environment:
+      BUCCANET_HOME: /srv/door
+      BUCCANET_RELAY: http://app:8758
+    volumes:
+      - door-profile:/srv/door
+    mem_limit: 256m
+    cpus: 0.5
+    depends_on:
+      app:
+        condition: service_healthy
+
   mongo:
     extends:
       file: /opt/vps-automation/containers/hardened-service.yaml
@@ -65,3 +88,4 @@ services:
 volumes:
   mongo-data:
   mongo-config:
+  door-profile:
