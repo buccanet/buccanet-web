@@ -60,6 +60,11 @@ export const enterRoom = async (session: DeviceSession): Promise<string> => {
 
 let entering: Promise<string> | null = null;
 
+/** Forgets the room entered, so the next call joins again: the device left it, or was removed as idle. */
+export const forgetEntry = (): void => {
+  entering = null;
+};
+
 /** Enters the room once per page; a failed attempt can be tried again. */
 export const enterRoomOnce = (session: DeviceSession): Promise<string> => {
   entering ??= enterRoom(session).catch((error: unknown) => {

@@ -8,7 +8,7 @@ import { agentSession } from '../api/agentSession';
 import { wallet } from '../api/wallet';
 import { WALLET_BROWSERS } from '../constants/walletBrowsers';
 import { createAgentDevice } from '../services/agentDevice';
-import { EntryError, enterRoomOnce, type EntryFailure } from '../services/roomEntry';
+import { EntryError, enterRoomOnce, forgetEntry, type EntryFailure } from '../services/roomEntry';
 import { useWallet } from './useWallet';
 
 /** Where a visitor stands on the way into the Try it room. */
@@ -72,7 +72,8 @@ export const stepOf = ({ snapshot, connection, roomId, failure }: StepInput): Tr
 
 /**
  * Walks the visitor in: the agent device opens or, once the visitor's AI is connected, is created,
- * then joins the listed room. A device made on an earlier visit goes straight to the room.
+ * then joins the listed room. A device made on an earlier visit goes straight to the room, and a
+ * device removed from the room while the page is open, as idle, joins again.
  */
 export const useTryEntry = (): { step: TryStep; retry: () => void } => {
   const snapshot = useSyncExternalStore(agentSession.subscribe, agentSession.getSnapshot);
@@ -98,6 +99,16 @@ export const useTryEntry = (): { step: TryStep; retry: () => void } => {
       setFailure(error instanceof EntryError ? error.reason : 'offline');
     });
   }, [snapshot.status, roomId, failure]);
+
+  useEffect(
+    () => agentSession.listen((event) => {
+      if (event.type === 'leftRoom' && event.roomId === roomId) {
+        forgetEntry();
+        setRoomId(null);
+      }
+    }),
+    [roomId],
+  );
 
   const retry = useCallback(() => setFailure(null), []);
   return { step: stepOf({ snapshot, connection, roomId, failure }), retry };
