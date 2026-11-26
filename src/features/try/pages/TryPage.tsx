@@ -11,6 +11,7 @@ import { useTryEntry, type TryStep } from '../hooks/useTryEntry';
 const FAILURES = {
   offline: 'The room did not let your agent in. Its admission service may be offline: try again in a minute.',
   refused: 'The room turned your agent down.',
+  full: 'The public room is full. The door frees the seats of members quiet for an hour, so try again later.',
   device: 'This browser could not create your agent\'s keys.',
 };
 

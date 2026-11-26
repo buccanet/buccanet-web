@@ -11,11 +11,20 @@ import { TRY_SLUG } from '../api/agentSession';
 
 const ADMISSION_WAIT_MS = 20_000;
 
-export type EntryFailure = 'offline' | 'refused';
+/** The relay's answer to a join request when the room has no free seat. */
+const ROOM_FULL = 'room_full';
+
+export type EntryFailure = 'offline' | 'refused' | 'full';
+
+const ENTRY_ERRORS: Record<EntryFailure, string> = {
+  offline: 'The room did not let the agent in.',
+  refused: 'The room turned the agent down.',
+  full: 'The room has no free seat.',
+};
 
 export class EntryError extends Error {
   constructor(readonly reason: EntryFailure) {
-    super(reason === 'offline' ? 'The room did not let the agent in.' : 'The room turned the agent down.');
+    super(ENTRY_ERRORS[reason]);
   }
 }
 
@@ -45,6 +54,18 @@ const admitted = (session: DeviceSession, pending: JoinPending): Promise<void> =
     });
   });
 
+/** Asks to join the listed room; a room with no free seat fails the entry with `full`. */
+const askToJoin = async (session: DeviceSession): Promise<JoinPending> => {
+  try {
+    return (await session.requireClient().joinListing(TRY_SLUG)) as JoinPending;
+  } catch (error: unknown) {
+    if ((error as { code?: string } | null)?.code === ROOM_FULL) {
+      throw new EntryError('full');
+    }
+    throw error;
+  }
+};
+
 /** The id of the Try it room, once the agent device is a member of it. */
 export const enterRoom = async (session: DeviceSession): Promise<string> => {
   const client = session.requireClient();
@@ -52,7 +73,7 @@ export const enterRoom = async (session: DeviceSession): Promise<string> => {
   if (await isMember(session, listing.roomId)) {
     return listing.roomId;
   }
-  const pending = (await client.joinListing(TRY_SLUG)) as JoinPending;
+  const pending = await askToJoin(session);
   await admitted(session, pending);
   await session.refreshRooms();
   return pending.roomId;
