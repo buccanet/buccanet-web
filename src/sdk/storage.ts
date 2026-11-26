@@ -2,10 +2,13 @@
  * Device blobs live in IndexedDB: one database, one store, one key per device of this browser
  * (the person's device, and the agent device of the Try it room). The page keeps one open
  * connection and writes through an ordered queue, so an older blob never lands after a newer one.
+ * A device the relay forgot keeps its blob under an archive key beside it, and the store keeps the
+ * latest few archives of each device.
  */
 
 const DB_NAME = 'buccanet';
 const STORE = 'device';
+const ARCHIVES_KEPT = 3;
 
 const open = (): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
@@ -66,19 +69,41 @@ export const loadState = async (key: string): Promise<Uint8Array | null> => {
   return value ?? null;
 };
 
-/** Deletes a device's blob, behind every queued save so none writes it back. */
-export const removeState = (key: string): Promise<void> => {
-  const removed = queue.then(async () => {
-    const db = await database();
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction(STORE, 'readwrite');
-      transaction.objectStore(STORE).delete(key);
-      transaction.oncomplete = () => resolve();
-      transaction.onerror = () => reject(transaction.error);
-    });
+const archivePrefix = (key: string): string => `${key}-forgotten-`;
+
+/** The archive keys of a device beyond the latest ones kept, oldest first. */
+const surplusArchives = (keys: readonly string[], key: string): string[] => {
+  const prefix = archivePrefix(key);
+  const stamp = (archive: string): number => Number(archive.slice(prefix.length));
+  const archives = keys.filter((candidate) => candidate.startsWith(prefix) && Number.isFinite(stamp(candidate)));
+  archives.sort((a, b) => stamp(a) - stamp(b));
+  return archives.slice(0, Math.max(0, archives.length - ARCHIVES_KEPT));
+};
+
+/** Moves the blob to its archive key and drops the oldest archives, in one transaction. */
+const moveToArchive = (db: IDBDatabase, key: string): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE, 'readwrite');
+    const store = transaction.objectStore(STORE);
+    const blob = store.get(key);
+    blob.onsuccess = () => {
+      if (blob.result !== undefined) {
+        store.put(blob.result, `${archivePrefix(key)}${Date.now()}`);
+      }
+      store.delete(key);
+      const keys = store.getAllKeys();
+      keys.onsuccess = () => surplusArchives(keys.result.map(String), key).forEach((archive) => store.delete(archive));
+    };
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+    transaction.onabort = () => reject(transaction.error ?? new Error('The archive was aborted.'));
   });
-  queue = removed.catch(() => undefined);
-  return removed;
+
+/** Sets a device's blob aside under its archive key, behind every queued save so none writes it back. */
+export const archiveState = (key: string): Promise<void> => {
+  const archived = queue.then(async () => moveToArchive(await database(), key));
+  queue = archived.catch(() => undefined);
+  return archived;
 };
 
 /** Queues the blob behind every earlier save. A failed save rejects its own promise and leaves the queue running. */

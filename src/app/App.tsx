@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 
+import { Button } from '@/components/ui/Button';
 import { ChatPage } from '@/features/chat/pages/ChatPage';
 import { JoinPage } from '@/features/join/pages/JoinPage';
 import { WelcomePage } from '@/features/onboarding/pages/WelcomePage';
@@ -20,15 +21,30 @@ const Gate = () => {
     return <main className="grid min-h-full place-items-center p-6 text-center text-chalk-2">Buccanet is open in another tab of this browser.</main>;
   }
   if (state.status === 'failed') {
-    return <main className="grid min-h-full place-items-center p-6 text-center text-danger">This device could not be opened.</main>;
+    return <OpenFailed failure={state.failure} />;
   }
+  const welcome = state.status === 'needs-device';
+  const forgotten = state.failure ?? undefined;
   return (
     <Routes>
-      <Route path="/join/:token" element={state.status === 'needs-device' ? <WelcomePage reason="Pick a name to join this room. Your keys are created in this browser." /> : <JoinPage />} />
-      <Route path="*" element={state.status === 'needs-device' ? <WelcomePage /> : <Chats />} />
+      <Route path="/join/:token" element={welcome ? <WelcomePage reason={forgotten ?? JOIN_REASON} /> : <JoinPage />} />
+      <Route path="*" element={welcome ? <WelcomePage reason={forgotten} /> : <Chats />} />
     </Routes>
   );
 };
+
+const JOIN_REASON = 'Pick a name to join this room. Your keys are created in this browser.';
+
+/** The stored device did not open. It stays in this browser, and the person can try again. */
+const OpenFailed = ({ failure }: { failure: string | null }) => (
+  <main className="grid min-h-full place-items-center p-6">
+    <div role="alert" className="max-w-md space-y-4 text-center">
+      <p className="text-danger">This device could not be opened. Its keys stay in this browser.</p>
+      {failure ? <p className="text-sm text-chalk-2">{failure}</p> : null}
+      <Button onClick={() => void personSession.retry()}>Try again</Button>
+    </div>
+  </main>
+);
 
 const Chats = () => (
   <Routes>

@@ -21,6 +21,7 @@ export type TryStep =
   | { kind: 'connecting' }
   | { kind: 'joining' }
   | { kind: 'failed'; reason: EntryFailure | 'device' }
+  | { kind: 'reopen'; detail: string | null }
   | { kind: 'inside'; roomId: string };
 
 type Failure = EntryFailure | 'device';
@@ -62,7 +63,7 @@ export const stepOf = ({ snapshot, connection, roomId, failure }: StepInput): Tr
     case 'elsewhere':
       return { kind: 'elsewhere' };
     case 'failed':
-      return { kind: 'failed', reason: 'device' };
+      return { kind: 'reopen', detail: snapshot.failure };
     case 'needs-device':
       return walletStep(connection);
     case 'ready':
@@ -116,6 +117,9 @@ export const useTryEntry = (): { step: TryStep; retry: () => void } => {
     [roomId],
   );
 
-  const retry = useCallback(() => setFailure(null), []);
+  const retry = useCallback(() => {
+    setFailure(null);
+    void agentSession.retry();
+  }, []);
   return { step: stepOf({ snapshot, connection, roomId, failure }), retry };
 };

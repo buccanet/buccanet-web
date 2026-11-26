@@ -14,6 +14,8 @@ const FAILURES = {
   device: 'This browser could not create your agent\'s keys.',
 };
 
+const REOPEN_FAILURE = 'Your agent could not be opened. Its keys stay in this browser.';
+
 const Frame = ({ children }: { children: ReactNode }) => (
   <main className="grid min-h-full place-items-center p-6">
     <div className="w-full max-w-md space-y-8">
@@ -35,6 +37,14 @@ const Frame = ({ children }: { children: ReactNode }) => (
 
 const Waiting = ({ text }: { text: string }) => <p className="font-mono text-sm text-chalk-2">{text}</p>;
 
+const Failed = ({ text, detail, retry }: { text: string; detail?: string | null; retry: () => void }) => (
+  <div className="space-y-4">
+    <p role="alert" className="text-sm text-danger">{text}</p>
+    {detail ? <p className="text-xs text-chalk-2">{detail}</p> : null}
+    <Button className="w-full" onClick={retry}>Try again</Button>
+  </div>
+);
+
 const StepCard = ({ step, retry }: { step: Exclude<TryStep, { kind: 'inside' }>; retry: () => void }) => {
   switch (step.kind) {
     case 'checking':
@@ -52,12 +62,9 @@ const StepCard = ({ step, retry }: { step: Exclude<TryStep, { kind: 'inside' }>;
     case 'joining':
       return <Waiting text="Your agent is joining the room…" />;
     case 'failed':
-      return (
-        <div className="space-y-4">
-          <p role="alert" className="text-sm text-danger">{FAILURES[step.reason]}</p>
-          <Button className="w-full" onClick={retry}>Try again</Button>
-        </div>
-      );
+      return <Failed text={FAILURES[step.reason]} retry={retry} />;
+    case 'reopen':
+      return <Failed text={REOPEN_FAILURE} detail={step.detail} retry={retry} />;
   }
 };
 

@@ -6,7 +6,7 @@
  */
 
 import init, { BuccanetClient } from './pkg/buccanet.js';
-import { loadState, removeState, saveState } from './storage';
+import { archiveState, loadState, saveState } from './storage';
 import type { ChatMessage, ClientEvent, DeviceKind, PendingJoin, RoomInfo } from './types';
 
 export {
@@ -23,6 +23,8 @@ export interface Snapshot {
   pending: PendingJoin[];
   live: boolean;
   notice: string | null;
+  /** Why the stored device did not open, or why the relay forgot it. */
+  failure: string | null;
 }
 
 export interface SessionOptions {
@@ -34,6 +36,13 @@ export interface SessionOptions {
 
 type EventListener = (event: ClientEvent) => void;
 
+/** The relay's answer for a well formed token whose device it no longer has. */
+const DEVICE_UNKNOWN = 'device_unknown';
+
+const FORGOTTEN = 'The relay no longer knows the device of this browser. Its keys are set aside in this browser, and you can create a new device.';
+
+const failureOf = (error: unknown): string => `The relay could not open this device: ${error instanceof Error ? error.message : String(error)}`;
+
 let wasm: Promise<unknown> | null = null;
 const loadWasm = (): Promise<unknown> => {
   wasm ??= init();
@@ -44,7 +53,9 @@ const relayUrl = (): string => window.location.origin;
 
 export class DeviceSession {
   private client: BuccanetClient | null = null;
-  private snapshot: Snapshot = { status: 'loading', me: null, rooms: [], messages: {}, pending: [], live: false, notice: null };
+  private snapshot: Snapshot = {
+    status: 'loading', me: null, rooms: [], messages: {}, pending: [], live: false, notice: null, failure: null,
+  };
   private readonly listeners = new Set<() => void>();
   private readonly eventListeners = new Set<EventListener>();
   private booting: Promise<void> | null = null;
@@ -86,6 +97,14 @@ export class DeviceSession {
   boot = (): Promise<void> => {
     this.booting ??= this.openDevice();
     return this.booting;
+  };
+
+  /** Opens the stored device again after a failure, under the tab lock the page already holds. */
+  retry = async (): Promise<void> => {
+    if (this.snapshot.status === 'failed') {
+      this.publish({ status: 'loading', failure: null });
+      await this.openStored();
+    }
   };
 
   createDevice = async (name: string, kind: DeviceKind): Promise<void> => {
@@ -167,7 +186,7 @@ export class DeviceSession {
     this.client = instance;
     // Ready once the relay has accepted the device, so nothing acts for a device it refuses.
     await instance.sync();
-    this.publish({ status: 'ready', me: { deviceId: instance.deviceId(), name: instance.name() } });
+    this.publish({ status: 'ready', me: { deviceId: instance.deviceId(), name: instance.name() }, failure: null });
     await this.refreshRooms();
     await Promise.all(this.snapshot.rooms.map((room) => this.refreshMessages(room.roomId)));
     await this.loadPending();
@@ -175,19 +194,33 @@ export class DeviceSession {
   }
 
   /**
-   * A stored device the relay no longer knows (its data was reset) is deleted from this browser,
-   * and the page offers a new one. Any other failure leaves the device and shows the failure.
+   * Only the relay's `device_unknown` means the device is gone: its blob moves to an archive key
+   * in this browser and the page offers a new device. Any other failure keeps the device and shows
+   * the failure.
    */
   private onRestoreFailed = async (error: unknown): Promise<void> => {
     console.error('buccanet', error);
-    if ((error as { code?: string } | null)?.code !== 'unauthorized') {
-      this.publish({ status: 'failed' });
+    this.client = null;
+    if ((error as { code?: string } | null)?.code !== DEVICE_UNKNOWN) {
+      this.publish({ status: 'failed', failure: failureOf(error) });
       return;
     }
-    this.client = null;
-    await removeState(this.options.storageKey);
-    this.publish({ status: 'needs-device', me: null, rooms: [], messages: {}, pending: [] });
+    await archiveState(this.options.storageKey);
+    this.publish({ status: 'needs-device', me: null, rooms: [], messages: {}, pending: [], failure: FORGOTTEN });
   };
+
+  private async openStored(): Promise<void> {
+    const stored = await loadState(this.options.storageKey);
+    if (!stored) {
+      this.publish({ status: 'needs-device' });
+      return;
+    }
+    try {
+      await this.start(BuccanetClient.restore(stored, this.handleEvent, this.persist));
+    } catch (error) {
+      await this.onRestoreFailed(error);
+    }
+  }
 
   private async openDevice(): Promise<void> {
     await loadWasm();
@@ -198,12 +231,7 @@ export class DeviceSession {
           settled();
           return;
         }
-        const stored = await loadState(this.options.storageKey);
-        if (stored) {
-          await this.start(BuccanetClient.restore(stored, this.handleEvent, this.persist)).catch(this.onRestoreFailed);
-        } else {
-          this.publish({ status: 'needs-device' });
-        }
+        await this.openStored();
         settled();
         await new Promise(() => {});
       });
