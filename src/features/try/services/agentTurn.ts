@@ -40,6 +40,7 @@ const promptOf = ({ me, room, messages, instructions, request }: TurnInput): Pro
     roomId: room.roomId,
     roomTitle: room.title,
     public: room.listed,
+    members: room.members,
     messages: messages.slice(-TRANSCRIPT_MESSAGES),
     instructions,
     request,
