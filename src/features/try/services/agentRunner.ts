@@ -7,7 +7,7 @@
  * waits for a person to write.
  */
 
-import { GuardStop } from '@tensorpass/aiconnect';
+import { GuardStop, type QuestionStop } from '@tensorpass/aiconnect';
 
 import { agentWakes, type DeviceSession } from '@/sdk/session';
 import type { ChatMessage, RoomInfo } from '@/sdk/types';
@@ -15,13 +15,14 @@ import type { ChatMessage, RoomInfo } from '@/sdk/types';
 import { sendText } from '../../chat/actions';
 import { wallet } from '../api/wallet';
 import { COOLDOWN_MS, HOUR_MS, MERGE_MS, TURNS_PER_HOUR } from '../constants/agentBudget';
-import { runTurn, type TurnOutcome } from './agentTurn';
+import {
+  BURST_NOTE, budgetNote, leftOutNote, OFFLINE_NOTE, OUTCOME_NOTES, questionStopNote, type ActivityKind,
+} from './activityNotes';
+import { askModel, prepareTurn } from './agentTurn';
 
 /** Messages older than this when they arrive, such as the ones missed while the page was closed, wake nobody. */
 const BACKLOG_MS = 60_000;
 const ACTIVITY_KEPT = 6;
-
-export type ActivityKind = 'asked' | 'answered' | 'quiet' | 'held' | 'waiting' | 'error';
 
 export interface Activity {
   id: number;
@@ -35,19 +36,6 @@ export interface RunnerState {
   busy: boolean;
   activity: Activity[];
 }
-
-const OUTCOME_NOTES: Record<TurnOutcome['kind'], [ActivityKind, string]> = {
-  answer: ['answered', 'Your agent answered in the room.'],
-  silent: ['quiet', 'Your agent read the room and stayed quiet.'],
-  secret: ['held', 'Your agent wrote something shaped like a key, so the message was not sent.'],
-};
-
-const BURST_NOTE = 'The agents here reached their limit of messages in a row. Your agent waits until a person writes.';
-
-const clockTime = (at: number): string => new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-const budgetNote = (resumeAt: number): string =>
-  `Your agent used its ${TURNS_PER_HOUR} turns of this hour on your AI plan. It reads the room again at ${clockTime(resumeAt)}.`;
 
 export class AgentRunner {
   private state: RunnerState = { paused: false, busy: false, activity: [] };
@@ -181,7 +169,7 @@ export class AgentRunner {
     if (oldest !== undefined && this.turns.length >= TURNS_PER_HOUR) {
       return budgetNote(oldest + HOUR_MS);
     }
-    return wallet().state.status === 'connected' ? null : 'Your AI is not connected, so your agent cannot answer.';
+    return wallet().state.status === 'connected' ? null : OFFLINE_NOTE;
   }
 
   private async answer(request: string | null): Promise<void> {
@@ -192,8 +180,12 @@ export class AgentRunner {
       return;
     }
     const messages = snapshot.messages[this.roomId] ?? [];
+    const prepared = prepareTurn({ me: snapshot.me, room, messages, instructions: this.instructions, request });
+    if (prepared.leftOut.length > 0) {
+      this.note('held', leftOutNote(prepared.leftOut));
+    }
     this.turns.push(Date.now());
-    const outcome = await runTurn(connection.session, { me: snapshot.me, room, messages, instructions: this.instructions, request });
+    const outcome = await askModel(connection.session, prepared);
     if (outcome.kind === 'answer') {
       await sendText(this.session, this.roomId, outcome.text);
     }
@@ -204,7 +196,7 @@ export class AgentRunner {
   private fail(error: unknown): void {
     if (error instanceof GuardStop) {
       const text = error.stage === 'question'
-        ? 'A message in the room read like an attempt to steer your agent, so it stayed quiet.'
+        ? questionStopNote(error.reason as QuestionStop)
         : `A guard stopped your agent's answer (${error.reason}).`;
       this.note('held', text);
       return;

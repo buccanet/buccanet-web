@@ -1,4 +1,5 @@
-import type { Activity, ActivityKind } from '../services/agentRunner';
+import type { ActivityKind } from '../services/activityNotes';
+import type { Activity } from '../services/agentRunner';
 
 const TONE: Record<ActivityKind, string> = {
   asked: 'text-chalk',
