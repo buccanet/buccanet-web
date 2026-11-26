@@ -1,9 +1,10 @@
 /**
  * The visitor's agent at work while the Try it page is open. Every message of the room wakes it,
  * unless it names other members with `@`, and the agent decides itself whether to answer. Wakes
- * close together become one turn, and a turn waits out a cooldown after the last answer. The visitor's own request from the side panel runs
- * at once. Replies are capped per hour, and on the relay's agent burst refusal the agent waits for
- * a person to write.
+ * close together become one turn, and a wake waits out a cooldown after the last turn, whatever
+ * that turn ended with. The visitor's own request runs at once. Every turn that reaches the
+ * visitor's model counts against an hourly budget, and on the relay's agent burst refusal the agent
+ * waits for a person to write.
  */
 
 import { GuardStop } from '@tensorpass/aiconnect';
@@ -13,12 +14,9 @@ import type { ChatMessage, RoomInfo } from '@/sdk/types';
 
 import { sendText } from '../../chat/actions';
 import { wallet } from '../api/wallet';
+import { COOLDOWN_MS, HOUR_MS, MERGE_MS, TURNS_PER_HOUR } from '../constants/agentBudget';
 import { runTurn, type TurnOutcome } from './agentTurn';
 
-const MERGE_MS = 1_500;
-const COOLDOWN_MS = 20_000;
-const REPLIES_PER_HOUR = 30;
-const HOUR_MS = 3_600_000;
 /** Messages older than this when they arrive, such as the ones missed while the page was closed, wake nobody. */
 const BACKLOG_MS = 60_000;
 const ACTIVITY_KEPT = 6;
@@ -46,14 +44,20 @@ const OUTCOME_NOTES: Record<TurnOutcome['kind'], [ActivityKind, string]> = {
 
 const BURST_NOTE = 'The agents here reached their limit of messages in a row. Your agent waits until a person writes.';
 
+const clockTime = (at: number): string => new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+const budgetNote = (resumeAt: number): string =>
+  `Your agent used its ${TURNS_PER_HOUR} turns of this hour on your AI plan. It reads the room again at ${clockTime(resumeAt)}.`;
+
 export class AgentRunner {
   private state: RunnerState = { paused: false, busy: false, activity: [] };
   private readonly listeners = new Set<() => void>();
   private timer: number | null = null;
   private due = false;
   private request: string | null = null;
-  private lastReply = 0;
-  private replies: number[] = [];
+  private lastTurn = 0;
+  /** When each turn of the last hour reached the model. */
+  private turns: number[] = [];
   private burstHeld = false;
   private noteId = 0;
   private instructions = '';
@@ -115,8 +119,13 @@ export class AgentRunner {
     const room = this.room();
     const recent = Date.now() - Date.parse(message.at) < BACKLOG_MS;
     if (me && room && recent && agentWakes(message, me.deviceId)) {
-      this.schedule(Math.max(MERGE_MS, this.lastReply + COOLDOWN_MS - Date.now()));
+      this.schedule(this.nextDelay());
     }
+  }
+
+  /** A request of the visitor runs at once; a wake waits out the cooldown of the last turn. */
+  private nextDelay(): number {
+    return this.request === null ? Math.max(MERGE_MS, this.lastTurn + COOLDOWN_MS - Date.now()) : 0;
   }
 
   private schedule(delay: number): void {
@@ -154,21 +163,23 @@ export class AgentRunner {
     } catch (error) {
       this.fail(error);
     } finally {
+      this.lastTurn = Date.now();
       this.update({ busy: false });
       if (this.due) {
-        this.schedule(Math.max(MERGE_MS, this.lastReply + COOLDOWN_MS - Date.now()));
+        this.schedule(this.nextDelay());
       }
     }
   }
 
   /** Why the agent cannot answer now, if it cannot. */
   private blocked(): string | null {
-    this.replies = this.replies.filter((at) => Date.now() - at < HOUR_MS);
+    this.turns = this.turns.filter((at) => Date.now() - at < HOUR_MS);
     if (this.burstHeld) {
       return BURST_NOTE;
     }
-    if (this.replies.length >= REPLIES_PER_HOUR) {
-      return `Your agent answered ${REPLIES_PER_HOUR} times this hour and waits before answering again.`;
+    const [oldest] = this.turns;
+    if (oldest !== undefined && this.turns.length >= TURNS_PER_HOUR) {
+      return budgetNote(oldest + HOUR_MS);
     }
     return wallet().state.status === 'connected' ? null : 'Your AI is not connected, so your agent cannot answer.';
   }
@@ -181,11 +192,10 @@ export class AgentRunner {
       return;
     }
     const messages = snapshot.messages[this.roomId] ?? [];
+    this.turns.push(Date.now());
     const outcome = await runTurn(connection.session, { me: snapshot.me, room, messages, instructions: this.instructions, request });
     if (outcome.kind === 'answer') {
       await sendText(this.session, this.roomId, outcome.text);
-      this.lastReply = Date.now();
-      this.replies.push(this.lastReply);
     }
     const [kind, text] = OUTCOME_NOTES[outcome.kind];
     this.note(kind, outcome.kind === 'secret' ? `${text} Rule: ${outcome.rule}.` : text);
@@ -207,7 +217,13 @@ export class AgentRunner {
     this.note('error', error instanceof Error ? error.message : String(error));
   }
 
+  /** Adds a line to the activity. A line that repeats the newest one only moves its time. */
   private note(kind: ActivityKind, text: string): void {
+    const [newest, ...older] = this.state.activity;
+    if (newest && newest.kind === kind && newest.text === text) {
+      this.update({ activity: [{ ...newest, at: Date.now() }, ...older] });
+      return;
+    }
     this.noteId += 1;
     const entry = { id: this.noteId, at: Date.now(), kind, text };
     this.update({ activity: [entry, ...this.state.activity].slice(0, ACTIVITY_KEPT) });

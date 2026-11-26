@@ -10,6 +10,7 @@ import { createChatGuard, finalAnswer, runConversation, type ProviderSession } f
 import { agentPrompt, agentSilent, checkSecret } from '@/sdk/session';
 import type { ChatMessage, RoomInfo } from '@/sdk/types';
 
+import { MAX_STEPS } from '../constants/agentBudget';
 import { memberTool } from './memberTool';
 
 /** Messages of the room the agent reads each turn, the latest ones. */
@@ -56,7 +57,8 @@ export const runTurn = async (session: ProviderSession, input: TurnInput): Promi
     session,
     messages: [{ role: 'system', content: prompt.system }, { role: 'user', content: prompt.user }],
     tools: memberTool(input.room, input.me.deviceId),
-    maxToolCalls: 2,
+    maxSteps: MAX_STEPS,
+    maxToolCalls: 1,
     guard: createChatGuard(GUARD_POLICY),
   });
   const text = finalAnswer(added)?.content.trim() ?? '';

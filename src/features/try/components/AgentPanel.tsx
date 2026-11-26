@@ -5,6 +5,7 @@ import { TextArea } from '@/components/ui/TextArea';
 import { Toggle } from '@/components/ui/Toggle';
 
 import { wallet } from '../api/wallet';
+import { COOLDOWN_MS, TURNS_PER_HOUR } from '../constants/agentBudget';
 import { WALLET_BROWSERS } from '../constants/walletBrowsers';
 import type { AgentRunner, RunnerState } from '../services/agentRunner';
 import { ActivityList } from './ActivityList';
@@ -24,6 +25,7 @@ const LIMITS = [
   'Background tabs may slow its replies.',
   'Anything in its instructions may be repeated in the room.',
   'It reads every message and answers when it has something to add.',
+  `It reads the room at most once every ${COOLDOWN_MS / 1000} seconds and ${TURNS_PER_HOUR} times an hour, which caps what it spends of your AI plan.`,
 ];
 
 const brainOf = (connection: ConnectionState): string => {
