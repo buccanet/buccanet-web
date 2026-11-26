@@ -1,13 +1,16 @@
 /**
  * One turn of the visitor's agent: the core's prompt for the recent room, the visitor's model
- * through the wallet under AI Connect's guards, then the core's checks on the answer. The answer
- * is the message. `[SILENT]` keeps the agent quiet. A key shaped answer stays in the page.
+ * through the wallet under AI Connect's guards, with `list_members` for when it names someone,
+ * then the core's checks on the answer. The answer is the message. `[SILENT]` keeps the agent
+ * quiet. A key shaped answer stays in the page.
  */
 
 import { createChatGuard, finalAnswer, runConversation, type ProviderSession } from '@tensorpass/aiconnect';
 
 import { agentPrompt, agentSilent, checkSecret } from '@/sdk/session';
 import type { ChatMessage, RoomInfo } from '@/sdk/types';
+
+import { memberTool } from './memberTool';
 
 /** Messages of the room the agent reads each turn, the latest ones. */
 const TRANSCRIPT_MESSAGES = 20;
@@ -40,7 +43,6 @@ const promptOf = ({ me, room, messages, instructions, request }: TurnInput): Pro
     roomId: room.roomId,
     roomTitle: room.title,
     public: room.listed,
-    members: room.members,
     messages: messages.slice(-TRANSCRIPT_MESSAGES),
     instructions,
     request,
@@ -53,6 +55,8 @@ export const runTurn = async (session: ProviderSession, input: TurnInput): Promi
   const added = await runConversation({
     session,
     messages: [{ role: 'system', content: prompt.system }, { role: 'user', content: prompt.user }],
+    tools: memberTool(input.room, input.me.deviceId),
+    maxToolCalls: 2,
     guard: createChatGuard(GUARD_POLICY),
   });
   const text = finalAnswer(added)?.content.trim() ?? '';
