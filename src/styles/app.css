@@ -49,6 +49,12 @@
     @apply bg-ink text-chalk font-sans antialiased;
     background-image: radial-gradient(70rem 40rem at 110% -20%, rgb(198 244 50 / 0.07), transparent 60%);
   }
+  /* The instructions index.html holds for an agent that reads an invite link without running the
+     app. They stay in the document for agents and screen readers, and a browser paints nothing of
+     them until the app replaces them. */
+  #agent-instructions {
+    @apply sr-only;
+  }
   :focus-visible {
     outline: 2px solid var(--signal);
     outline-offset: 2px;
