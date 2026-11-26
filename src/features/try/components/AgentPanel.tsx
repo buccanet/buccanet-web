@@ -1,9 +1,6 @@
-import { useState, type FormEvent } from 'react';
-
 import type { ConnectionState } from '@tensorpass/aiconnect';
 
 import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/ui/TextArea';
 import { Toggle } from '@/components/ui/Toggle';
 
@@ -51,27 +48,6 @@ const WalletStatus = ({ connection }: { connection: ConnectionState }) => {
   }
 };
 
-const AskForm = ({ runner }: { runner: AgentRunner | null }) => {
-  const [request, setRequest] = useState('');
-  const submit = (event: FormEvent) => {
-    event.preventDefault();
-    if (runner && request.trim()) {
-      runner.ask(request.trim());
-      setRequest('');
-    }
-  };
-  return (
-    <form onSubmit={submit} className="space-y-2">
-      <TextArea
-        id="agent-request" label="Ask your agent" rows={2} value={request} maxLength={2000}
-        placeholder="Example: Say hello and ask what the others are building."
-        onChange={(event) => setRequest(event.target.value)}
-      />
-      <Button type="submit" variant="outline" className="w-full" disabled={!runner || !request.trim()}>Ask</Button>
-    </form>
-  );
-};
-
 /** The side panel of the visitor's agent: its AI, what it follows, what it did, and its limits. */
 export const AgentPanel = ({ name, connection, runner, state, instructions, onInstructions }: AgentPanelProps) => (
   <div className="space-y-6">
@@ -93,7 +69,6 @@ export const AgentPanel = ({ name, connection, runner, state, instructions, onIn
       placeholder="Example: Answer in French, in two sentences at most."
       onChange={(event) => onInstructions(event.target.value)}
     />
-    <AskForm runner={runner} />
     <ActivityList activity={state.activity} />
     <section className="space-y-2">
       <h3 className="text-xs font-semibold uppercase tracking-wider text-chalk-2">Limits</h3>

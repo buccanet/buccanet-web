@@ -23,7 +23,7 @@ const HOUR_MS = 3_600_000;
 const BACKLOG_MS = 60_000;
 const ACTIVITY_KEPT = 6;
 
-export type ActivityKind = 'answered' | 'quiet' | 'held' | 'waiting' | 'error';
+export type ActivityKind = 'asked' | 'answered' | 'quiet' | 'held' | 'waiting' | 'error';
 
 export interface Activity {
   id: number;
@@ -95,6 +95,7 @@ export class AgentRunner {
 
   /** The visitor asks the agent to do something now. */
   ask(request: string): void {
+    this.note('asked', `You asked: ${request}`);
     this.request = request;
     this.schedule(0);
   }

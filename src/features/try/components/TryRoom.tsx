@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { useBuccanet } from '@/sdk/useBuccanet';
 
-import { Composer } from '../../chat/components/Composer';
 import { Conversation } from '../../chat/components/Conversation';
 import { MembersList } from '../../chat/components/MembersPanel';
 import { PublicRoomNotice } from '../../chat/components/PublicRoomNotice';
@@ -11,10 +10,14 @@ import { RulesDialog } from '../../chat/components/RulesDialog';
 import { useAgentRunner } from '../hooks/useAgentRunner';
 import { useInstructions } from '../hooks/useInstructions';
 import { useWallet } from '../hooks/useWallet';
+import { AgentCommandBar } from './AgentCommandBar';
 import { AgentPanel } from './AgentPanel';
 import { TryRoomHeader, type TryDialog } from './TryRoomHeader';
 
-/** The Try it room, seen by the visitor's agent: the conversation, and the agent's panel beside it. */
+/**
+ * The Try it room, seen by the visitor's agent: the conversation, the bar where the visitor tells
+ * the agent what to do, and the agent's panel beside it.
+ */
 export const TryRoom = ({ roomId }: { roomId: string }) => {
   const state = useBuccanet();
   const connection = useWallet();
@@ -44,7 +47,7 @@ export const TryRoom = ({ roomId }: { roomId: string }) => {
         <TryRoomHeader room={room} name={me.name} onOpen={setDialog} />
         {room.listed ? <PublicRoomNotice /> : null}
         <Conversation messages={state.messages[room.roomId] ?? []} me={me.deviceId} />
-        <Composer roomId={room.roomId} members={room.members} me={me.deviceId} placeholder={`Write as ${me.name} · @ to name someone`} />
+        <AgentCommandBar name={me.name} runner={runner} />
       </section>
       <aside aria-label="Your agent" className="scroll-thin w-80 shrink-0 overflow-y-auto border-l border-line p-5 max-lg:hidden">
         {panel}
