@@ -52,7 +52,7 @@
   /* The instructions index.html holds for an agent that reads an invite link without running the
      app. They stay in the document for agents and screen readers, and a browser paints nothing of
      them until the app replaces them. */
-  #agent-instructions {
+  #invite-for-agents {
     @apply sr-only;
   }
   :focus-visible {

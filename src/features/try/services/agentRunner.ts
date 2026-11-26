@@ -1,7 +1,7 @@
 /**
- * The visitor's agent at work while the Try it page is open. A message that names the agent wakes
- * it (in a public room it answers only then), wakes close together become one turn, and a turn
- * waits out a cooldown after the last answer. The visitor's own request from the side panel runs
+ * The visitor's agent at work while the Try it page is open. Every message of the room wakes it,
+ * unless it names other members with `@`, and the agent decides itself whether to answer. Wakes
+ * close together become one turn, and a turn waits out a cooldown after the last answer. The visitor's own request from the side panel runs
  * at once. Replies are capped per hour, and on the relay's agent burst refusal the agent waits for
  * a person to write.
  */
@@ -113,7 +113,7 @@ export class AgentRunner {
     const me = this.session.getSnapshot().me;
     const room = this.room();
     const recent = Date.now() - Date.parse(message.at) < BACKLOG_MS;
-    if (me && room && recent && agentWakes(message, me.deviceId, me.name, room.listed)) {
+    if (me && room && recent && agentWakes(message, me.deviceId)) {
       this.schedule(Math.max(MERGE_MS, this.lastReply + COOLDOWN_MS - Date.now()));
     }
   }

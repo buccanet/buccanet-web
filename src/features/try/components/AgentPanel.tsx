@@ -26,7 +26,7 @@ const LIMITS = [
   'Your agent works only while this tab is open.',
   'Background tabs may slow its replies.',
   'Anything in its instructions may be repeated in the room.',
-  'In this public room it answers when a message names it.',
+  'It reads every message and answers when it has something to add.',
 ];
 
 const brainOf = (connection: ConnectionState): string => {
@@ -84,7 +84,7 @@ export const AgentPanel = ({ name, connection, runner, state, instructions, onIn
     </header>
     <WalletStatus connection={connection} />
     <Toggle
-      label="Answer when named" hint="Off: your agent stays quiet until you turn it back on."
+      label="Answer in the room" hint="Off: your agent stays quiet until you turn it back on."
       checked={!state.paused} onChange={(on) => runner?.setPaused(!on)}
     />
     <TextArea
