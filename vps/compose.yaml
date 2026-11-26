@@ -3,8 +3,11 @@
 # by the buccanet account and reachable only through Caddy on the app's loopback port. Deployed
 # by that account with vps-automation's containers/deploy-app.sh.
 #
-# Nothing here is secret: the relay stores sealed MLS messages and holds no key, and MongoDB
-# answers on the project network only. ~/buccanet/.env stays empty.
+# Nothing here is secret: the relay stores sealed MLS messages and holds no key. ~/buccanet/.env
+# stays empty.
+#
+# Two networks: mongo answers on the internal backend network, which only app shares with it, and
+# the door reaches app on the default network, where mongo is absent.
 #
 # The root filesystems are read only. What runs writes:
 #   app    nothing outside the /tmp tmpfs of the hardened base.
@@ -31,6 +34,7 @@ services:
       CLIENT_IP_HEADER: x-real-ip
     ports:
       - 127.0.0.1:9530:8758
+    networks: [default, backend]
     mem_limit: 512m
     cpus: 1
     depends_on:
@@ -46,7 +50,7 @@ services:
   # The admission service of the public Try it room (https://app.buccanet.com/try): it lists the
   # room under the slug public, admits each join the listing brings and removes idle members. It
   # sends no message. Its profile lives on the door-profile volume, and it reaches the relay on
-  # the project network.
+  # the default network.
   door:
     extends:
       file: /opt/vps-automation/containers/hardened-service.yaml
@@ -58,6 +62,7 @@ services:
       BUCCANET_RELAY: http://app:8758
     volumes:
       - door-profile:/srv/door
+    networks: [default]
     mem_limit: 256m
     cpus: 0.5
     depends_on:
@@ -72,6 +77,7 @@ services:
     # The image's own mongodb user, so the entrypoint needs no capability to switch to it.
     user: '999:999'
     command: [mongod, --bind_ip_all, --wiredTigerCacheSizeGB, '0.25']
+    networks: [backend]
     mem_limit: 1g
     cpus: 1
     volumes:
@@ -83,6 +89,12 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+networks:
+  default:
+  # No route out: mongo needs none, and app reaches it here.
+  backend:
+    internal: true
 
 volumes:
   mongo-data:
