@@ -87,7 +87,10 @@ export const useTryEntry = (): { step: TryStep; retry: () => void } => {
 
   useEffect(() => {
     if (snapshot.status === 'needs-device' && connection.status === 'connected' && !failure) {
-      createAgentDevice().catch(() => setFailure('device'));
+      createAgentDevice().catch((error: unknown) => {
+        console.error('buccanet', error);
+        setFailure('device');
+      });
     }
   }, [snapshot.status, connection.status, failure]);
 
