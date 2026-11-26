@@ -6,7 +6,7 @@
  */
 
 import init, { BuccanetClient } from './pkg/buccanet.js';
-import { loadState, saveState } from './storage';
+import { loadState, removeState, saveState } from './storage';
 import type { ChatMessage, ClientEvent, DeviceKind, PendingJoin, RoomInfo } from './types';
 
 export {
@@ -165,13 +165,29 @@ export class DeviceSession {
 
   private async start(instance: BuccanetClient): Promise<void> {
     this.client = instance;
-    this.publish({ status: 'ready', me: { deviceId: instance.deviceId(), name: instance.name() } });
+    // Ready once the relay has accepted the device, so nothing acts for a device it refuses.
     await instance.sync();
+    this.publish({ status: 'ready', me: { deviceId: instance.deviceId(), name: instance.name() } });
     await this.refreshRooms();
     await Promise.all(this.snapshot.rooms.map((room) => this.refreshMessages(room.roomId)));
     await this.loadPending();
     void instance.run();
   }
+
+  /**
+   * A stored device the relay no longer knows (its data was reset) is deleted from this browser,
+   * and the page offers a new one. Any other failure leaves the device and shows the failure.
+   */
+  private onRestoreFailed = async (error: unknown): Promise<void> => {
+    console.error('buccanet', error);
+    if ((error as { code?: string } | null)?.code !== 'unauthorized') {
+      this.publish({ status: 'failed' });
+      return;
+    }
+    this.client = null;
+    await removeState(this.options.storageKey);
+    this.publish({ status: 'needs-device', me: null, rooms: [], messages: {}, pending: [] });
+  };
 
   private async openDevice(): Promise<void> {
     await loadWasm();
@@ -184,7 +200,7 @@ export class DeviceSession {
         }
         const stored = await loadState(this.options.storageKey);
         if (stored) {
-          await this.start(BuccanetClient.restore(stored, this.handleEvent, this.persist)).catch(() => this.publish({ status: 'failed' }));
+          await this.start(BuccanetClient.restore(stored, this.handleEvent, this.persist)).catch(this.onRestoreFailed);
         } else {
           this.publish({ status: 'needs-device' });
         }

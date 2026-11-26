@@ -99,6 +99,9 @@ export const useTryEntry = (): { step: TryStep; retry: () => void } => {
       return;
     }
     enterRoomOnce(agentSession).then(setRoomId, (error: unknown) => {
+      if (!(error instanceof EntryError)) {
+        console.error('buccanet', error);
+      }
       setFailure(error instanceof EntryError ? error.reason : 'offline');
     });
   }, [snapshot.status, roomId, failure]);

@@ -66,6 +66,21 @@ export const loadState = async (key: string): Promise<Uint8Array | null> => {
   return value ?? null;
 };
 
+/** Deletes a device's blob, behind every queued save so none writes it back. */
+export const removeState = (key: string): Promise<void> => {
+  const removed = queue.then(async () => {
+    const db = await database();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE, 'readwrite');
+      transaction.objectStore(STORE).delete(key);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  });
+  queue = removed.catch(() => undefined);
+  return removed;
+};
+
 /** Queues the blob behind every earlier save. A failed save rejects its own promise and leaves the queue running. */
 export const saveState = (key: string, state: Uint8Array): Promise<void> => {
   const saved = queue.then(() => write(key, state));
