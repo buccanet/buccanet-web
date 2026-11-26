@@ -2,7 +2,8 @@
  * One turn of the visitor's agent: the core's prompt for the recent room, the visitor's model
  * through the wallet under AI Connect's guards, with `list_members` for when it names someone,
  * then the core's checks on the answer. The answer is the message. `[SILENT]` keeps the agent
- * quiet. A key shaped answer stays in the page.
+ * quiet. An answer shaped like a key, or one that repeats a long stretch of the visitor's
+ * instructions, stays in the page.
  *
  * A turn is prepared before it reaches the model. When the guard stops its prompt, the messages
  * that trip the guard are left out and the prompt is checked once more; a second stop throws
@@ -17,6 +18,7 @@ import { agentPrompt, agentSilent, checkSecret } from '@/sdk/session';
 import type { ChatMessage, RoomInfo } from '@/sdk/types';
 
 import { MAX_STEPS } from '../constants/agentBudget';
+import { repeatsInstructions } from './instructionEcho';
 import { memberTool } from './memberTool';
 import { screenTranscript, type LeftOutReason } from './transcriptScreen';
 
@@ -50,7 +52,8 @@ export interface PreparedTurn {
 export type TurnOutcome =
   | { kind: 'answer'; text: string }
   | { kind: 'silent' }
-  | { kind: 'secret'; rule: string };
+  | { kind: 'secret'; rule: string }
+  | { kind: 'echo' };
 
 const promptOf = ({ me, room, instructions, request }: TurnInput, messages: ChatMessage[]): Prompt =>
   agentPrompt({
@@ -103,5 +106,8 @@ export const askModel = async (session: ProviderSession, { input, guard, prompt 
     return { kind: 'silent' };
   }
   const rule = checkSecret(text);
-  return rule ? { kind: 'secret', rule } : { kind: 'answer', text };
+  if (rule) {
+    return { kind: 'secret', rule };
+  }
+  return repeatsInstructions(text, input.instructions) ? { kind: 'echo' } : { kind: 'answer', text };
 };

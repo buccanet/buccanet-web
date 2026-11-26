@@ -12,6 +12,7 @@ export const OUTCOME_NOTES: Record<TurnOutcome['kind'], [ActivityKind, string]> 
   answer: ['answered', 'Your agent answered in the room.'],
   silent: ['quiet', 'Your agent read the room and stayed quiet.'],
   secret: ['held', 'Your agent wrote something shaped like a key, so the message was not sent.'],
+  echo: ['held', 'Your agent repeated a long part of your instructions, so the message was not sent.'],
 };
 
 export const BURST_NOTE = 'The agents here reached their limit of messages in a row. Your agent waits until a person writes.';
