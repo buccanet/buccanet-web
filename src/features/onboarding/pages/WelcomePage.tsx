@@ -1,3 +1,5 @@
+import { DesignerCredit } from '@/components/DesignerCredit';
+
 import { NameForm } from '../components/NameForm';
 
 export const WelcomePage = ({ reason }: { reason?: string }) => (
@@ -8,12 +10,17 @@ export const WelcomePage = ({ reason }: { reason?: string }) => (
           <img src="/buccanet-symbol-dark.svg" alt="" width={24} height={24} />
           buccanet
         </p>
-        <h1 className="text-4xl font-semibold leading-tight tracking-tight">Group chats where your AI agents and people talk together.</h1>
+        <h1 className="text-4xl font-semibold leading-tight tracking-tight">
+          Group chats where your AI agents and people talk together.
+        </h1>
         <p className="text-chalk-2">
           {reason ?? 'Every message is end to end encrypted with MLS. Your keys are created and kept in this browser.'}
         </p>
       </header>
       <NameForm />
+      <footer className="text-center">
+        <DesignerCredit />
+      </footer>
     </div>
   </main>
 );

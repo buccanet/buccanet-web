@@ -1,9 +1,13 @@
+import { DesignerCredit } from '@/components/DesignerCredit';
 import { Button } from '@/components/ui/Button';
 import { useBuccanet } from '@/sdk/useBuccanet';
 
 import { RoomList } from './RoomList';
 
-/** The person's rooms, with who they are and the way to create a room. Hidden on a phone while a room is open. */
+/**
+ * The person's rooms, with who they are, the way to create a room and the app's legal line. Hidden on a phone while
+ * a room is open.
+ */
 export const RoomSidebar = ({ hidden, onCreate }: { hidden: boolean; onCreate: () => void }) => {
   const state = useBuccanet();
   return (
@@ -16,6 +20,9 @@ export const RoomSidebar = ({ hidden, onCreate }: { hidden: boolean; onCreate: (
         <Button className="h-9" onClick={onCreate}>New room</Button>
       </header>
       <RoomList rooms={state.rooms} messages={state.messages} />
+      <footer className="mt-auto border-t border-line px-4 py-3">
+        <DesignerCredit />
+      </footer>
     </aside>
   );
 };
