@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { DesignerCredit } from '@/components/DesignerCredit';
 import { Button } from '@/components/ui/Button';
 import { SessionContext } from '@/sdk/useBuccanet';
 
@@ -32,6 +33,9 @@ const Frame = ({ children }: { children: ReactNode }) => (
         </p>
       </header>
       <div className="rounded-[var(--radius)] border border-line bg-ink-2 p-6">{children}</div>
+      <footer className="text-center">
+        <DesignerCredit />
+      </footer>
     </div>
   </main>
 );
