@@ -13,8 +13,8 @@
     "preview": "vite preview --port 8759 --strictPort"
   },
   "dependencies": {
-    "@tensorpass/aiconnect": "0.1.9",
-    "@tensorpass/aiconnect-design": "0.1.9",
+    "@tensorpass/aiconnect": "0.1.10",
+    "@tensorpass/aiconnect-design": "0.1.10",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-router": "7.9.4"
